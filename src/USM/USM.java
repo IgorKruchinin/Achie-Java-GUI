@@ -52,7 +52,10 @@ public class USM {
                 ssecs_ = new HashMap<>();
                 Path path = Paths.get("profiles/", name_ + ".uto");
                 Files.createFile(path);
-            } catch (IOException ignored) {}
+                to_file();
+            } catch (IOException e) {
+                to_file();
+            }
         }
     }
     public void to_file() {
