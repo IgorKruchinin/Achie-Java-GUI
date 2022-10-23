@@ -4,30 +4,33 @@ import java.util.Vector;
 import java.util.List;
 import java.util.Arrays;
 
-public class IntSection {
+public class IntSection implements Section {
     private String name_;
-    private final List<Integer> objects_;
+    private final List<Long> objects_;
     public IntSection(String name) {
         name_ = name;
         objects_ = new Vector<>();
     }
-    public IntSection(String name, Integer[] vec) {
+    public IntSection(String name, Long[] vec) {
         name_ = name;
         objects_ = Arrays.asList(vec);
+    }
+    public int get_format() {
+        return 0;
     }
     public String get_name() {
         return name_;
     }
-    public void add(int object) {
+    public void add(long object) {
         objects_.add(object);
     }
     public int size() {
         return objects_.size();
     }
-    public final List<Integer> getObjects_() {
+    public final List<Long> getObjects_() {
         return objects_;
     }
-    public final int get(int index) {
+    public final long get(int index) {
         return objects_.get(index);
     }
     public void parse(String str) throws USMSectionException {
@@ -65,7 +68,7 @@ public class IntSection {
                     if (!(sl.to_string(1, 5).equals("<\\e>"))) {
                         obj_buff.append(sl.c);
                     } else {
-                        objects_.add(Integer.parseInt(obj_buff.toString()));
+                        objects_.add(Long.parseLong(obj_buff.toString()));
                         obj_buff = new StringBuilder();
                         sl = sl.end();
                         cnt = 0;
