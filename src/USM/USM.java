@@ -247,6 +247,40 @@ public class USM {
 
         }
     }
+    public void to_one_archive(final String filename, final String typename, int index) throws IOException {
+        Path path = Paths.get("profiles", File.separator, name_ + ".uos");
+        try (final OutputStream outputStream = Files.newOutputStream(path)) {
+            StringBuilder text_buf = new StringBuilder();
+            for (Map.Entry<String, Section> entry: secs_.entrySet()) {
+                if (entry.getValue() instanceof StringSection) {
+                    text_buf.append(entry.getKey()).append(":");
+                    text_buf.append(((StringSection)entry.getValue()).get(index));
+                } else if (entry.getValue() instanceof IntSection) {
+                    text_buf.append(entry.getKey()).append(":");
+                    text_buf.append(String.valueOf(((IntSection)entry.getValue()).get(index)));
+                }
+                text_buf.append("\n");
+            }
+            outputStream.write(text_buf.toString().getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        Map<String, String> env = new HashMap<>();
+        env.put("create", "true");
+        Path zipFilePath = Paths.get(filename + "." + typename);
+
+        URI uri = URI.create("jar:file:" + zipFilePath.toAbsolutePath().toString());
+
+        try (FileSystem zipFs = FileSystems.newFileSystem(uri, env)) {
+            Path zipPath = zipFs.getPath(path.getFileName().toString());
+            Path zipRes = zipFs.getPath("res", File.separator, name_);
+            Files.copy(path, zipPath, StandardCopyOption.REPLACE_EXISTING);
+            Files.createDirectory(zipRes);
+        } catch (FileAlreadyExistsException ignore) {
+
+        }
+    }
 }
 
 class Arithmetics {
