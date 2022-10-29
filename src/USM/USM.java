@@ -42,8 +42,12 @@ public class USM {
         }
         if (!is_opened) {
             try {
+                Files.createDirectory(Paths.get("profiles"));
                 Files.createFile(path);
+                Files.createFile(Paths.get("profiles", "profiles_list.txt"));
                 Files.write(Paths.get("profiles", File.separator, "profiles_list.txt"), name_.getBytes(), StandardOpenOption.APPEND);
+            } catch (FileAlreadyExistsException ignore) {
+
             } catch (IOException e) {
                 System.exit(1);
             }

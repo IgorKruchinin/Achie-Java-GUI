@@ -7,25 +7,38 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
 public class GUI {
-    public static void main(String[] args) {
+
+    USM profile;
+    String defaultProfileName;
+    Achie[] achiesArray;
+    JList<Achie> achies ;
+    public GUI() {
         // Container container = new Box(0);
         // newProfile("main");
-        USM profile = getProfile("2022");
+        getDefaultProfile();
 
 
+    }
+
+    void paintMainWin() {
+        achiesArray = getAchies(profile);
+        achies = new JList<Achie>();
+        achies.setListData(achiesArray);
         JFrame jFrame = getFrame(JFrame.EXIT_ON_CLOSE);
         // container.add(new JButton());
         JPanel jp = new JPanel(new FlowLayout());
         JButton jbt = new JButton("Создать профиль");
-        Achie[] achiesArray = getAchies(profile);
-        JList<Achie> achies = new JList<Achie>();
-        achies.setListData(achiesArray);
         achies.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         achies.addListSelectionListener(new ListSelectionListener() {
             @Override
@@ -45,10 +58,10 @@ public class GUI {
                     Thread imgLoading = new Thread(new Runnable() {
                         @Override
                         public void run() {
-                                SwingUtilities.invokeLater(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        try {
+                            SwingUtilities.invokeLater(new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
                                         File imgFile = new File("profiles" + File.separator + "res" + File.separator + profile.get_name(), achiesArray[achies.getSelectedIndex()].getPhoto());
                                         System.out.println("File opened");
                                         BufferedImage img = ImageIO.read(imgFile);
@@ -60,13 +73,13 @@ public class GUI {
                                         System.out.println("Image binded");
                                         Toolkit toolkit = Toolkit.getDefaultToolkit();
                                         Dimension dimension = toolkit.getScreenSize();
-                                        viewAchie.repaint(dimension.width/2 - 250, dimension.height/2 - 200, 500, 400);
+                                        viewAchie.repaint(dimension.width / 2 - 250, dimension.height / 2 - 200, 500, 400);
 
                                     } catch (IOException ex) {
                                         ex.printStackTrace();
                                     }
-                                    }
-                                });
+                                }
+                            });
                         }
                     });
                     imgLoading.start();
@@ -92,8 +105,6 @@ public class GUI {
         jbt.setText("Выйти из программы");
         jp.add(jbt);
         jFrame.setContentPane(jp);
-
-
     }
     static JFrame getFrame(int closeOperation) {
         JFrame jFrame = new JFrame() {};
@@ -104,21 +115,7 @@ public class GUI {
         jFrame.setBounds(dimension.width/2 - 250, dimension.height/2 - 150, 500, 300);
         return jFrame;
     }
-    /** Get profile by name. If profile is not existing, creates a new
-     * @param name name for profile which you want to get **/
-    static USM getProfile(String name) {
-        USM profile = new USM(name);
-        if (!profile.opened()) {
-            profile.create_isec("date");
-            profile.create_ssec("object");
-            profile.create_ssec("type");
-            profile.create_ssec("measure");
-            profile.create_ssec("photo");
-            profile.create_isec("value");
-            profile.to_file();
-        }
-        return profile;
-    }
+
     static Achie[] getAchies(USM profile) {
         int size = profile.geti("date").size();
         Achie[] achies = new Achie[size];
@@ -135,8 +132,8 @@ public class GUI {
         profile.create_ssec("object");
         profile.create_ssec("type");
         profile.create_ssec("measure");
-        profile.create_ssec("date");
-        profile.create_isec("count");
+        profile.create_ssec("photo");
+        profile.create_isec("value");
         profile.to_file();
         return profile;
     }
@@ -159,5 +156,66 @@ public class GUI {
         profile.gets("photo").add(photo);
         profile.geti("count").add(value);
         profile.to_file();
+    }
+    static private USM getProfile(String name) {
+        USM profile = new USM(name);
+        if (!profile.opened()) {
+            profile.create_isec("date");
+            profile.create_ssec("object");
+            profile.create_ssec("type");
+            profile.create_ssec("measure");
+            profile.create_ssec("photo");
+            profile.create_isec("value");
+            profile.to_file();
+        }
+        return profile;
+    }
+
+    void getDefaultProfile() {
+        Path defaultProfilePath = Paths.get("profiles", "default_profile.txt");
+        final USM[] defaultProfile = {null};
+        final boolean[] pressed = {false};
+        try {
+            if (!Files.exists(defaultProfilePath)) {
+                Files.createFile(defaultProfilePath);
+            }
+            String defaultProfileName = Files.readString(defaultProfilePath);
+            if (defaultProfileName.length() > 0) {
+                profile = getProfile(defaultProfileName);
+                pressed[0] = true;
+            }
+        } catch (IOException ignore) {
+
+        }
+        if (profile == null) {
+            JDialog newProfileDialog = new JDialog();
+            Toolkit toolkit = Toolkit.getDefaultToolkit();
+            Dimension dimension = toolkit.getScreenSize();
+            newProfileDialog.setBounds(dimension.width / 2 - 150, dimension.height / 2 - 50, 300, 100);
+            JTextField profileName = new JTextField("Имя профиля");
+            JButton createProfileBtn = new JButton();
+            createProfileBtn.setAction(new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    profile = newProfile(profileName.getText());
+                    pressed[0] = true;
+                    try {
+                        Files.write(defaultProfilePath, profile.get_name().getBytes());
+                        newProfileDialog.setVisible(false);
+                        paintMainWin();
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            });
+            JPanel panel = new JPanel(new FlowLayout());
+            panel.add(profileName);
+            panel.add(createProfileBtn);
+            newProfileDialog.setContentPane(panel);
+            newProfileDialog.setVisible(true);
+
+        } else {
+            paintMainWin();
+        }
     }
 }
