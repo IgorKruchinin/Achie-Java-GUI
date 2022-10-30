@@ -151,7 +151,7 @@
               <forms/>
             </constraints>
             <properties>
-              <text value="Button"/>
+              <text value="Загрузить изображение"/>
             </properties>
           </component>
         </children>

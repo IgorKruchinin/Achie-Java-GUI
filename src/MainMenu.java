@@ -25,7 +25,7 @@ public class MainMenu extends JDialog {
         setModal(true);
         getRootPane().setDefaultButton(addAchieBtn);
         Dimension dimension = new Dimension();
-        rectangle = new Rectangle(dimension.width - 250, dimension.height - 300, 500, 600);
+        rectangle = new Rectangle(dimension.width - 350, dimension.height - 300, 700, 600);
 
         addAchieBtn.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -86,14 +86,15 @@ public class MainMenu extends JDialog {
                                         System.out.println("File opened");
                                         BufferedImage img = ImageIO.read(imgFile);
                                         System.out.println("Image loaded");
-                                        ImageIcon imgIcon = new ImageIcon(img.getScaledInstance(img.getWidth() / 10, img.getHeight() / 10, Image.SCALE_AREA_AVERAGING));
+                                        double k = (double)img.getHeight() / img.getWidth();
+                                        ImageIcon imgIcon = new ImageIcon(img.getScaledInstance(700, (int)(700 * k), Image.SCALE_AREA_AVERAGING));
                                         System.out.println("Image resized");
                                         JLabel imgLabel = new JLabel(imgIcon);
                                         viewAchie.add(imgLabel);
                                         System.out.println("Image binded");
                                         Toolkit toolkit = Toolkit.getDefaultToolkit();
                                         Dimension dimension = toolkit.getScreenSize();
-                                        viewAchie.repaint(dimension.width / 2 - 250, dimension.height / 2 - 200, 500, 400);
+                                        viewAchie.repaint(dimension.width / 2 - 350, dimension.height / 2 - 200, 700, 400);
 
                                     } catch (IOException ex) {
                                         ex.printStackTrace();
