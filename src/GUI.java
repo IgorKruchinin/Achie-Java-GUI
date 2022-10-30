@@ -6,6 +6,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -14,8 +15,19 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.text.*;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
+import java.util.Properties;
+
+
+import org.jdatepicker.*;
+import org.jdatepicker.impl.DateComponentFormatter;
+import org.jdatepicker.impl.JDatePanelImpl;
+import org.jdatepicker.impl.JDatePickerImpl;
+import org.jdatepicker.impl.UtilDateModel;
+import org.jdatepicker.util.JDatePickerUtil;
 
 public class GUI {
 
@@ -32,13 +44,62 @@ public class GUI {
     }
 
     void paintMainWin() {
-        achiesArray = getAchies(profile);
+        achiesArray = Achie.getAchies(profile);
         achies = new JList<Achie>();
         achies.setListData(achiesArray);
         JFrame jFrame = getFrame(JFrame.EXIT_ON_CLOSE);
         // container.add(new JButton());
         JPanel jp = new JPanel(new FlowLayout());
-        JButton jbt = new JButton("Создать профиль");
+        JButton jbt = new JButton("Добавить достижение");
+        jbt.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                /*JDialog newAchieDialog = new JDialog();
+                Dimension dimension = new Dimension();
+                newAchieDialog.setBounds(dimension.width - 150, dimension.height - 300, 300, 600);
+                JPanel addAchiePanel = new JPanel();///////////////////
+                JDatePickerImpl dateFld = new JDatePickerImpl(new JDatePanelImpl(new UtilDateModel(), new Properties()), new DateComponentFormatter());
+                Date date = new Date();
+                DateFormat dateFormat = SimpleDateFormat.getDateInstance();
+                dateFld.setBackground(Color.gray);
+                dateFld.getJFormattedTextField().setText(dateFormat.format(date));
+                dateFld.getJFormattedTextField().setBackground(Color.gray);
+                JTextField objectFld = new JTextField();
+                JTextField typeFld = new JTextField();
+                JTextField measureFld = new JTextField();
+                JTextField countFld = new JFormattedTextField();
+                JButton newAchieBtn = new JButton("Создать");
+                newAchieBtn.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        addAchie(profile, date.getTime(), objectFld.getText(), typeFld.getText(), "",  measureFld.getText(), Long.parseLong(countFld.getText()));
+                    }
+                });
+                JPanel datePanel = new JPanel();
+                datePanel.add(dateFld);
+                addAchiePanel.add(datePanel);
+                JPanel objectPanel = new JPanel();
+                objectPanel.add(objectFld);
+                addAchiePanel.add(objectPanel);
+                addAchiePanel.add(typeFld);
+                JPanel measurePanel = new JPanel();
+                measurePanel.add(measureFld);
+                addAchiePanel.add(measurePanel);
+                JPanel countPanel = new JPanel();
+                countPanel.add(countFld);
+                addAchiePanel.add(countPanel);
+                JPanel newAchiePanel = new JPanel();
+                newAchiePanel.add(newAchieBtn);
+                addAchiePanel.add(newAchiePanel);
+                newAchieDialog.setContentPane(addAchiePanel);
+                newAchieDialog.setVisible(true);*/
+
+                AddAchieDialog addAchieDialog = new AddAchieDialog(profile);
+                Dimension dimension = new Dimension();
+                addAchieDialog.setBounds(dimension.width - 150, dimension.height - 300, 300, 600);
+                addAchieDialog.setVisible(true);
+            }
+        });
         achies.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         achies.addListSelectionListener(new ListSelectionListener() {
             @Override
@@ -112,18 +173,11 @@ public class GUI {
         jFrame.setDefaultCloseOperation(closeOperation);
         Toolkit toolkit = Toolkit.getDefaultToolkit();
         Dimension dimension = toolkit.getScreenSize();
-        jFrame.setBounds(dimension.width/2 - 250, dimension.height/2 - 150, 500, 300);
+        jFrame.setBounds(dimension.width/2 - 250, dimension.height/2 - 300, 500, 600);
         return jFrame;
     }
 
-    static Achie[] getAchies(USM profile) {
-        int size = profile.geti("date").size();
-        Achie[] achies = new Achie[size];
-        for (int index = 0; index < size; ++index) {
-            achies[index] = new Achie(profile.geti("date").get(index), profile.gets("object").get(index), profile.gets("type").get(index), profile.gets("photo").get(index), profile.gets("measure").get(index), profile.geti("count").get(index));
-        }
-        return achies;
-    }
+
     /** Force creates new profile replacing it if exists
      * @param name name of profile which you want to create **/
     static USM newProfile(String name) {
@@ -148,7 +202,7 @@ public class GUI {
      * @param object The subject on which the achievement was completed
      * @param type The type of this achievement
      * @param value Value of this achievement **/
-    void addAchie(USM profile, int date, String object, String type, String photo, String measure, int value) {
+    static void addAchie(USM profile, long date, String object, String type, String photo, String measure, long value) {
         profile.geti("date").add(date);
         profile.gets("object").add(object);
         profile.gets("type").add(type);

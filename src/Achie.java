@@ -1,3 +1,5 @@
+import USM.USM;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -41,5 +43,13 @@ public class Achie {
     }
     public long getCount() {
         return count;
+    }
+    static Achie[] getAchies(USM profile) {
+        int size = profile.geti("date").size();
+        Achie[] achies = new Achie[size];
+        for (int index = 0; index < size; ++index) {
+            achies[index] = new Achie(profile.geti("date").get(index), profile.gets("object").get(index), profile.gets("type").get(index), profile.gets("photo").get(index), profile.gets("measure").get(index), profile.geti("count").get(index));
+        }
+        return achies;
     }
 }
