@@ -1,4 +1,4 @@
-import USM.USM;
+import USSM.USM.USM;
 
 import java.awt.*;
 

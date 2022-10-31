@@ -1,4 +1,4 @@
-import USM.USM;
+import USSM.USM.USM;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -18,6 +18,7 @@ public class MainMenu extends JDialog {
     private JButton addAchieBtn;
     private JButton buttonCancel;
     private JList<Achie> achiesList;
+    private JButton openTermBtn;
     Rectangle rectangle;
 
     public MainMenu(USM profile) {
@@ -36,6 +37,15 @@ public class MainMenu extends JDialog {
         buttonCancel.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 onCancel();
+            }
+        });
+
+        openTermBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                LOQTerm terminal = new LOQTerm();
+                terminal.setBounds(rectangle);
+                terminal.setVisible(true);
             }
         });
 

@@ -1,41 +1,41 @@
-package USM;
+package USSM.USM;
 import java.util.Vector;
 
 import java.util.List;
 import java.util.Arrays;
 
-public class IntSection implements Section {
+public class StringSection implements Section {
     private String name_;
-    private final List<Long> objects_;
-    public IntSection(String name) {
+    private final List<String> objects_;
+    public StringSection(String name) {
         name_ = name;
         objects_ = new Vector<>();
     }
-    public IntSection(String name, Long[] vec) {
+    public int get_format() {
+        return 1;
+    }
+    public final String get_name() {
+        return name_;
+    }
+    public StringSection(String name, String[] vec) {
         name_ = name;
         objects_ = Arrays.asList(vec);
     }
-    public int get_format() {
-        return 0;
-    }
-    public String get_name() {
-        return name_;
-    }
-    public void add(long object) {
+    public void add(String object) {
         objects_.add(object);
     }
     public int size() {
         return objects_.size();
     }
-    public final List<Long> getObjects_() {
-        return objects_;
-    }
-    public final long get(int index) {
+    public final String get(int index) {
         return objects_.get(index);
     }
+    public final List<String> getObjects_() {
+        return objects_;
+    }
     public void parse(String str) throws USMSectionException {
-        if (str.charAt(0) != 'i') {
-            throw new USMSectionException("Non IntSection string given to parse method");
+        if (str.charAt(0) != 's') {
+            throw new USMSectionException("Non StringSection string given to parse method");
         }
         StringBuilder sec_name = new StringBuilder();
         boolean first_in = true;
@@ -51,7 +51,6 @@ public class IntSection implements Section {
                 first_in = false;
             else if (!first_in && !name_entered && s != '>') {
                 sec_name.append(s);
-                //std::cout << sec_name;
             } else if (s == '>' && !first_in && !name_entered) {
                 name_entered = true;
                 continue_reading = true;
@@ -68,7 +67,7 @@ public class IntSection implements Section {
                     if (!(sl.to_string(1, 5).equals("<\\e>"))) {
                         obj_buff.append(sl.c);
                     } else {
-                        objects_.add(Long.parseLong(obj_buff.toString()));
+                        objects_.add(obj_buff.toString());
                         obj_buff = new StringBuilder();
                         sl = sl.end();
                         cnt = 0;

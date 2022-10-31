@@ -1,4 +1,4 @@
-package USM;
+package USSM.USM;
 
 public class USMProfileException extends Exception {
     USMProfileException(String message) {

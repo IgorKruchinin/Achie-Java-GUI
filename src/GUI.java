@@ -1,4 +1,4 @@
-import USM.*;
+import USSM.USM.*;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -6,28 +6,13 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.*;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Locale;
-import java.util.Properties;
-
-
-import org.jdatepicker.*;
-import org.jdatepicker.impl.DateComponentFormatter;
-import org.jdatepicker.impl.JDatePanelImpl;
-import org.jdatepicker.impl.JDatePickerImpl;
-import org.jdatepicker.impl.UtilDateModel;
-import org.jdatepicker.util.JDatePickerUtil;
 
 public class GUI {
 
@@ -191,13 +176,13 @@ public class GUI {
         profile.to_file();
         return profile;
     }
-    /** Adds an achievement in USM storage
+    /** Adds an achievement in USSM.USM storage
      * Example :
      * 
-     *      USM prof = newProfile("profile");
+     *      USSM.USM prof = newProfile("profile");
      *
      *      addAchie(prof, "2022.08.21, Sport, Push-ups, 100);
-     * @param profile a USM profile, where the achievement will be added
+     * @param profile a USSM.USM profile, where the achievement will be added
      * @param date Date when was this achievement achieved
      * @param object The subject on which the achievement was completed
      * @param type The type of this achievement

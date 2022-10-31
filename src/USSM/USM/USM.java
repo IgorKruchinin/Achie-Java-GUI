@@ -1,11 +1,17 @@
-package USM;
+package USSM.USM;
+//import com.sun.nio.zipfs.ZipFileSystem;
+
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
 import java.nio.file.*;
 import java.util.*;
 import java.nio.charset.StandardCharsets;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 
 public class USM {
     private String name_;
@@ -37,16 +43,14 @@ public class USM {
                     formats.add(1);
                 }
             }
-        } catch (java.io.IOException | USMSectionException e) {
+        } catch (IOException | USMSectionException e) {
             is_opened = false;
         }
         if (!is_opened) {
             try {
-                Files.createDirectory(Paths.get("profiles"));
                 Files.createFile(path);
-                Files.createFile(Paths.get("profiles", "profiles_list.txt"));
                 Files.write(Paths.get("profiles", File.separator, "profiles_list.txt"), name_.getBytes(), StandardOpenOption.APPEND);
-            } catch (FileAlreadyExistsException ignore) {
+                Files.write(Paths.get("profiles", File.separator, "profiles_list.txt"), "\n".getBytes(), StandardOpenOption.APPEND);
 
             } catch (IOException e) {
                 System.exit(1);
@@ -64,6 +68,7 @@ public class USM {
                 Path path = Paths.get("profiles", File.separator, name_ + ".uto");
                 Files.createFile(path);
                 Files.write(Paths.get("profiles", File.separator, "profiles_list.txt"), name_.getBytes(), StandardOpenOption.APPEND);
+                Files.write(Paths.get("profiles", File.separator, "profiles_list.txt"), "\n".getBytes(), StandardOpenOption.APPEND);
             } catch (IOException ignored) {}
         }
     }
@@ -90,13 +95,14 @@ public class USM {
                     formats.add(1);
                 }
             }
-        } catch (java.io.IOException | USMSectionException e) {
+        } catch (IOException | USMSectionException e) {
             is_opened = false;
         }
         if (!is_opened) {
             try {
                 Files.createFile(path);
                 Files.write(Paths.get("profiles", File.separator, "profiles_list.txt"), (name_ + ":" + program_name).getBytes(), StandardOpenOption.APPEND);
+                Files.write(Paths.get("profiles", File.separator, "profiles_list.txt"), "\n".getBytes(), StandardOpenOption.APPEND);
             } catch (IOException e) {
                 System.exit(1);
             }
@@ -114,6 +120,7 @@ public class USM {
                 Path path = Paths.get("profiles", File.separator, name_ + ".uto");
                 Files.createFile(path);
                 Files.write(Paths.get("profiles", File.separator, "profiles_list.txt"), (name_ + ":" + program_name).getBytes(), StandardOpenOption.APPEND);
+                Files.write(Paths.get("profiles", File.separator, "profiles_list.txt"), "\n".getBytes(), StandardOpenOption.APPEND);
             } catch (IOException ignored) {}
         }
     }
@@ -142,8 +149,52 @@ public class USM {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
+
+    public void to_archive(final String filename, final String typename) throws IOException {
+
+        Path path = Paths.get("profiles", File.separator, name_ + ".uto");
+        try (final OutputStream outputStream = Files.newOutputStream(path)) {
+            StringBuilder text_buf = new StringBuilder();
+            for (Map.Entry<String, Section> entry: secs_.entrySet()) {
+                if (entry.getValue() instanceof StringSection) {
+                    text_buf.append("s<").append(entry.getKey()).append(">");
+                    for (String obj : ((StringSection)entry.getValue()).getObjects_()) {
+                        text_buf.append(obj).append("|<\\e>");
+                    }
+                } else if (entry.getValue() instanceof IntSection) {
+                    text_buf.append("i<").append(entry.getKey()).append(">");
+                    for (Long obj: ((IntSection)entry.getValue()).getObjects_()) {
+                        text_buf.append(obj).append("|<\\e>");
+                    }
+                }
+                text_buf.append("\n");
+            }
+            outputStream.write(text_buf.toString().getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        Map<String, String> env = new HashMap<>();
+        env.put("create", "true");
+        Path zipFilePath = Paths.get(filename + "." + typename);
+
+        URI uri = URI.create("jar:file:" + zipFilePath.toAbsolutePath().toString());
+
+        try (FileSystem zipFs = FileSystems.newFileSystem(uri, env)) {
+            Path zipPath = zipFs.getPath(path.getFileName().toString());
+            Path zipRes = zipFs.getPath("res", File.separator, name_);
+            Files.copy(path, zipPath, StandardCopyOption.REPLACE_EXISTING);
+            Files.createDirectory(zipRes);
+        } catch (FileAlreadyExistsException ignore) {
+
+        }
+    }
+
+    public void to_archive(final String filename) throws IOException {
+        to_archive(filename, "uzo");
+    }
+
     public IntSection geti(final String name) {
         return (IntSection)secs_.get(name);
     }
@@ -211,79 +262,6 @@ public class USM {
             }
         }
         return profiles;
-    }
-    public void to_archive(final String filename, final String typename) throws IOException {
-
-        Path path = Paths.get("profiles", File.separator, name_ + ".uto");
-        try (final OutputStream outputStream = Files.newOutputStream(path)) {
-            StringBuilder text_buf = new StringBuilder();
-            for (Map.Entry<String, Section> entry: secs_.entrySet()) {
-                if (entry.getValue() instanceof StringSection) {
-                    text_buf.append("s<").append(entry.getKey()).append(">");
-                    for (String obj : ((StringSection)entry.getValue()).getObjects_()) {
-                        text_buf.append(obj).append("|<\\e>");
-                    }
-                } else if (entry.getValue() instanceof IntSection) {
-                    text_buf.append("i<").append(entry.getKey()).append(">");
-                    for (Long obj: ((IntSection)entry.getValue()).getObjects_()) {
-                        text_buf.append(obj).append("|<\\e>");
-                    }
-                }
-                text_buf.append("\n");
-            }
-            outputStream.write(text_buf.toString().getBytes());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        Map<String, String> env = new HashMap<>();
-        env.put("create", "true");
-        Path zipFilePath = Paths.get(filename + "." + typename);
-
-        URI uri = URI.create("jar:file:" + zipFilePath.toAbsolutePath().toString());
-
-        try (FileSystem zipFs = FileSystems.newFileSystem(uri, env)) {
-            Path zipPath = zipFs.getPath(path.getFileName().toString());
-            Path zipRes = zipFs.getPath("res", File.separator, name_);
-            Files.copy(path, zipPath, StandardCopyOption.REPLACE_EXISTING);
-            Files.createDirectory(zipRes);
-        } catch (FileAlreadyExistsException ignore) {
-
-        }
-    }
-    public void to_one_archive(final String filename, final String typename, int index) throws IOException {
-        Path path = Paths.get("profiles", File.separator, name_ + ".uos");
-        try (final OutputStream outputStream = Files.newOutputStream(path)) {
-            StringBuilder text_buf = new StringBuilder();
-            for (Map.Entry<String, Section> entry: secs_.entrySet()) {
-                if (entry.getValue() instanceof StringSection) {
-                    text_buf.append(entry.getKey()).append(":");
-                    text_buf.append(((StringSection)entry.getValue()).get(index));
-                } else if (entry.getValue() instanceof IntSection) {
-                    text_buf.append(entry.getKey()).append(":");
-                    text_buf.append(String.valueOf(((IntSection)entry.getValue()).get(index)));
-                }
-                text_buf.append("\n");
-            }
-            outputStream.write(text_buf.toString().getBytes());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        Map<String, String> env = new HashMap<>();
-        env.put("create", "true");
-        Path zipFilePath = Paths.get(filename + "." + typename);
-
-        URI uri = URI.create("jar:file:" + zipFilePath.toAbsolutePath().toString());
-
-        try (FileSystem zipFs = FileSystems.newFileSystem(uri, env)) {
-            Path zipPath = zipFs.getPath(path.getFileName().toString());
-            Path zipRes = zipFs.getPath("res", File.separator, name_);
-            Files.copy(path, zipPath, StandardCopyOption.REPLACE_EXISTING);
-            Files.createDirectory(zipRes);
-        } catch (FileAlreadyExistsException ignore) {
-
-        }
     }
 }
 

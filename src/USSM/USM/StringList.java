@@ -1,4 +1,4 @@
-package USM;
+package USSM.USM;
 
 public class StringList {
     char c;
