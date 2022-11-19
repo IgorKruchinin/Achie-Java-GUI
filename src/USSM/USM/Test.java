@@ -11,7 +11,7 @@ public class Test {
         System.out.println(prof.gets("Кошка").get(0));
         System.out.println(prof.gets("Собака").get(0));
         try {
-            prof.to_archive("testing");
+            prof.to_archive("testing", "uzo");
         } catch (IOException e) {
             e.printStackTrace();
         }

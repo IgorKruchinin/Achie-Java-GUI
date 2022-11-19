@@ -1,16 +1,14 @@
 package USSM.USM;
 //import com.sun.nio.zipfs.ZipFileSystem;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.URI;
 import java.nio.file.*;
 import java.util.*;
 import java.nio.charset.StandardCharsets;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 public class USM {
@@ -48,8 +46,11 @@ public class USM {
         }
         if (!is_opened) {
             try {
+                Files.createDirectories(path.getParent());
                 Files.createFile(path);
-                Files.write(Paths.get("profiles", File.separator, "profiles_list.txt"), name_.getBytes(), StandardOpenOption.APPEND);
+                Path prof_list = Paths.get("profiles", File.separator, "profiles_list.txt");
+                Files.createFile(prof_list);
+                Files.write(prof_list, name_.getBytes(), StandardOpenOption.APPEND);
                 Files.write(Paths.get("profiles", File.separator, "profiles_list.txt"), "\n".getBytes(), StandardOpenOption.APPEND);
 
             } catch (IOException e) {
@@ -191,8 +192,153 @@ public class USM {
         }
     }
 
-    public void to_archive(final String filename) throws IOException {
-        to_archive(filename, "uzo");
+    public File to_prof_archive(File archive) {
+        try {
+            BufferedInputStream o = null;
+            // File archive = new File(context.getExternalFilesDir(null) + File.separator + name_ + ".profpack");
+            FileOutputStream to =  new FileOutputStream(archive);
+            ZipOutputStream output = new ZipOutputStream(new BufferedOutputStream(to));
+            byte[] data = new byte[512];
+
+            FileInputStream utoInput = new FileInputStream(new File("profiles" + File.separator + name_ + ".uto"));
+            o = new BufferedInputStream(utoInput, 512);
+            ZipEntry uosEntry = new ZipEntry(name_ + ".uto");
+            output.putNextEntry(uosEntry);
+            int k = 0;
+            while((k = o.read(data, 0, 512)) != -1) {
+                output.write(data, 0, k);
+            }
+            o.close();
+            File resDir = new File("profiles" + File.separator + "res" + File.separator + name_);
+            if (resDir.listFiles() != null) {
+                for (File inputFile : resDir.listFiles()) {
+                    if (inputFile.exists() && inputFile.isFile()) {
+                        FileInputStream inputStream = new FileInputStream(inputFile);
+                        o = new BufferedInputStream(inputStream, 512);
+                        ZipEntry entry = new ZipEntry("res" + File.separator + name_ + File.separator + inputFile.getName());
+                        output.putNextEntry(entry);
+                        int count = 0;
+                        while ((count = o.read(data, 0, 512)) != -1) {
+                            output.write(data, 0, count);
+                        }
+                        o.close();
+                    }
+                }
+            }
+            output.close();
+            return archive;
+
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            return null;
+        }
+    }
+
+    public File to_one_archive(final File archive, int index, final String... resNames) throws IOException {
+        try {
+
+            Path path = Paths.get("profiles", File.separator, name_ + ".uos");
+            try (final OutputStream outputStream = Files.newOutputStream(path)) {
+                StringBuilder text_buf = new StringBuilder();
+                for (Map.Entry<String, Section> entry: secs_.entrySet()) {
+                    if (entry.getValue() instanceof StringSection) {
+                        text_buf.append(entry.getKey()).append(":");
+                        text_buf.append(((StringSection)entry.getValue()).get(index));
+                    } else if (entry.getValue() instanceof IntSection) {
+                        text_buf.append(entry.getKey()).append(":");
+                        text_buf.append(String.valueOf(((IntSection)entry.getValue()).get(index)));
+                    }
+                    text_buf.append("\n");
+                }
+                outputStream.write(text_buf.toString().getBytes());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+
+
+            BufferedInputStream o = null;
+            //File archive = new File(context.getExternalFilesDir(null) + File.separator + filename + "." + typename);
+            FileOutputStream to =  new FileOutputStream(archive);
+            ZipOutputStream output = new ZipOutputStream(new BufferedOutputStream(to));
+            byte[] data = new byte[512];
+
+            FileInputStream uosInput = new FileInputStream(path.toString());
+            o = new BufferedInputStream(uosInput, 512);
+            ZipEntry uosEntry = new ZipEntry(path.getFileName().toString());
+            output.putNextEntry(uosEntry);
+            int k = 0;
+            while((k = o.read(data, 0, 512)) != -1) {
+                output.write(data, 0, k);
+            }
+            o.close();
+            for (int i = 0; i < resNames.length; ++i) {
+                System.out.println(resNames[i]);
+                File inputFile = new File("profiles" + File.separator + "res"+ File.separator + name_ + File.separator + resNames[i]);
+                if (inputFile.exists() && inputFile.isFile()) {
+                    FileInputStream inputStream = new FileInputStream(inputFile);
+                    o = new BufferedInputStream(inputStream, 512);
+                    ZipEntry entry = new ZipEntry("res" + File.separator + resNames[i]);
+                    output.putNextEntry(entry);
+                    int count = 0;
+                    while ((count = o.read(data, 0, 512)) != -1) {
+                        output.write(data, 0, count);
+                    }
+                    o.close();
+                }
+            }
+            output.close();
+            return archive;
+
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            return null;
+        }
+    }
+
+    public static void from_profile_archive(ZipFile archive) throws IOException {
+        Enumeration<? extends ZipEntry> entries = archive.entries();
+        File profilesDir = new File("profiles");
+        File resDir = new File(profilesDir, "res");
+        resDir.mkdirs();
+        profilesDir.mkdirs();
+        Vector<String> names = new Vector<String>();
+        while (entries.hasMoreElements()) {
+            ZipEntry entry = entries.nextElement();
+            if (entry.isDirectory()) {
+                File dir = new File("profiles" + File.separator + entry.getName());
+                dir.mkdirs();
+            } else {
+                int index  = entry.getName().lastIndexOf('.');
+                if (index >= 0 && entry.getName().substring(index + 1).equals("uto")) {
+                    String name = entry.getName().substring(0, entry.getName().lastIndexOf('.'));
+                    File res = new File(resDir, name);
+                    res.mkdirs();
+                    names.add(name);
+                }
+                InputStream inputStream = archive.getInputStream(entry);
+                File file = new File(profilesDir, entry.getName());
+                file.createNewFile();
+                FileOutputStream outputStream = new FileOutputStream(file);
+
+                byte[] buffer = new byte[512];
+                int len;
+                while ((len = inputStream.read(buffer)) > 0) {
+                    outputStream.write(buffer, 0, len);
+                }
+            }
+
+        }
+        File profiles_list = new File("profiles" + File.separator +"profiles_list.txt");
+        if (!profiles_list.exists()) {
+            profiles_list.createNewFile();
+        }
+        for (String name : names) {
+            BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(profiles_list, true)));
+            bufferedWriter.write(name + "\n");
+            bufferedWriter.flush();
+            bufferedWriter.close();
+        }
     }
 
     public IntSection geti(final String name) {

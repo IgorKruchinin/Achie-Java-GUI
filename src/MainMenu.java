@@ -5,12 +5,14 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.desktop.OpenFilesEvent;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.zip.ZipFile;
 
 public class MainMenu extends JDialog {
     private USM profile;
@@ -19,7 +21,10 @@ public class MainMenu extends JDialog {
     private JButton buttonCancel;
     private JList<Achie> achiesList;
     private JButton openTermBtn;
-    Rectangle rectangle;
+    private JButton importBtn;
+    private JFileChooser profPackChooser;
+    private Rectangle rectangle;
+    private  Achie[] achiesArray;
 
     public MainMenu(USM profile) {
         setContentPane(contentPane);
@@ -31,6 +36,33 @@ public class MainMenu extends JDialog {
         addAchieBtn.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 onAddAchie();
+            }
+        });
+
+        importBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                profPackChooser = new JFileChooser() {
+                    @Override
+                    public void approveSelection() {
+                        File selectedFile = getSelectedFile();
+                        if (selectedFile.isFile()) {
+                            try {
+                                USM.from_profile_archive(new ZipFile(selectedFile, ZipFile.OPEN_READ));
+                                MainMenu.this.profile = new USM(profile.get_name());
+                            } catch (IOException ex) {
+                                ex.printStackTrace();
+                            }
+                            profPackChooser.cancelSelection();
+                            resetListContent();
+                            return;
+                        } else {
+                            super.approveSelection();
+                        }
+                    }
+                };
+                profPackChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                profPackChooser.showOpenDialog(MainMenu.this);
             }
         });
 
@@ -64,8 +96,7 @@ public class MainMenu extends JDialog {
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         this.profile = profile;
-        Achie[] achiesArray = Achie.getAchies(profile);
-        achiesList.setListData(achiesArray);
+        resetListContent();
         achiesList.addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
@@ -133,6 +164,11 @@ public class MainMenu extends JDialog {
     private void onCancel() {
         // add your code here if necessary
         dispose();
+    }
+
+    private  void resetListContent() {
+        achiesArray = Achie.getAchies(profile);
+        achiesList.setListData(achiesArray);
     }
 
     public static void main(String[] args) {

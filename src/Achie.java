@@ -43,11 +43,21 @@ public class Achie {
         return count;
     }
     static Achie[] getAchies(USM profile) {
-        int size = profile.geti("date").size();
-        Achie[] achies = new Achie[size];
-        for (int index = 0; index < size; ++index) {
-            achies[index] = new Achie(profile.geti("date").get(index), profile.gets("object").get(index), profile.gets("type").get(index), profile.gets("photo").get(index), profile.gets("measure").get(index), profile.geti("count").get(index));
+        if (profile.opened()) {
+            int size = profile.geti("date").size();
+            Achie[] achies = new Achie[size];
+            for (int index = 0; index < size; ++index) {
+                achies[index] = new Achie(profile.geti("date").get(index), profile.gets("object").get(index), profile.gets("type").get(index), profile.gets("photo").get(index), profile.gets("measure").get(index), profile.geti("count").get(index));
+            }
+            return achies;
+        } else {
+            profile.create_isec("date");
+            profile.create_ssec("object");
+            profile.create_ssec("type");
+            profile.create_ssec("photo");
+            profile.create_ssec("measure");
+            profile.create_isec("count");
+            return new Achie[0];
         }
-        return achies;
     }
 }
